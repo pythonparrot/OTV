@@ -1,3 +1,9 @@
+#include <Arduino.h>
+#include "Enes100.h"
+
+
+
+
 const int MOTOR1A = 4;  // Subject to change
 const int MOTOR1B = 2;  // Subject to change
 const int MOTOR1C = A2;  // Subject to change
@@ -6,8 +12,11 @@ const int MOTOR2A = 3;  // Subject to change
 const int MOTOR2B = 5;  // Subject to change
 const int USTrigger = 7; // ^^^
 const int USEcho = 8;
-#include "Arduino.h"
-#include "Enes100.h"
+const int WifiTX = 1;
+const int WifiRX = 0;
+
+
+
 
 
 
@@ -53,7 +62,7 @@ void setup() {
     pinMode(USTrigger, OUTPUT);
     pinMode(USEcho, INPUT);
     //The arduino will either start in the bottom or top square randomly
-    Enes100.begin("Material Motion", FIRE, );
+    Enes100.begin("Material Motion", MATERIAL, 6, 1120, WifiTX, WifiRX);
     startedAtBottom = false;
     
     if(Enes100.getY() < 1)
@@ -72,7 +81,7 @@ void setup() {
     conditionThree = !passedFirstObstacleSet();
     conditionFour = !passedSecondObstacleSet();
     
-    facingForward = (getTheta() < 0.1 && getTheta() > -0.1);
+    facingForward = (Enes100.getTheta() < 0.1 && Enes100.getTheta() > -0.1);
     
 }
 
@@ -123,7 +132,7 @@ void loop() {
     //The otv has now reached the other side
     
     updateSensorConditions();
-    
+
     //This happens before the first set of obstacles
     if(!passedFirstObstacleSet() && !passedSecondObstacleSet() && facingForward)
     {
@@ -143,11 +152,11 @@ void loop() {
          && readBumpSensor(3) == false)
          {
                 moveForward(25);
-                println(readDistanceSensor(sensorID));
+                //// println(readDistanceSensor(sensorID));
                 
                 updateSensorConditions();
                 
-                println(conditionThree);
+                //// println(conditionThree);
          }
          
         stopOTV();
@@ -155,6 +164,8 @@ void loop() {
 
     boolean spunOnce = false;
     boolean spunSecondTime = false;
+
+
 
     //If the otv disocvers obstacles after the first set, it needs 
     //move down or up (depending on where it started) and check if other slots
@@ -167,7 +178,7 @@ void loop() {
         if(readBumpSensor(3) == true)
         {
             //moves backward
-            println("MOVING BACKWARD");
+            // println("MOVING BACKWARD");
             
             moveBackward(25);
             
@@ -189,8 +200,8 @@ void loop() {
         
         spunOnce = true;
         
-        println("HERE!!");
-        println(readDistanceSensor(sensorID));
+        // // println("HERE!!");
+        // // println(readDistanceSensor(sensorID));
         
         //If there is still an obstacle there, go to bottom and proceed forward
         if(readDistanceSensor(sensorID) < 0.3 && !(readDistanceSensor(sensorID) < 0))
@@ -228,7 +239,7 @@ void loop() {
                 navigateToTop(); 
                 spinToZero();
                 
-                if(readDistanceSensor() < 0.3)
+                if(readDistanceSensor(sensorID) < 0.3)
                 {
                     navigateToBottom();
                   
@@ -297,8 +308,8 @@ void goToSecondObstacleSet()
 {
      while(!passedSecondObstacleSet() && (conditionOne || conditionTwo))
     {
-        println("MOVING TO SECOND OBSTACLE SET");
-        println(readBumpSensor(3));
+        // // println("MOVING TO SECOND OBSTACLE SET");
+        // // println(readBumpSensor(3));
         moveForward(30);
     }
             
@@ -353,9 +364,7 @@ void navigateToMiddle()
 } 
 
 void updateSensorConditions()
-{
-       begin();
-    
+{    
       //There is no obstacle right in front of the otv
         conditionOne = !(readDistanceSensor(sensorID) < 0.3);
         
@@ -367,7 +376,7 @@ void updateSensorConditions()
         conditionFour = !passedSecondObstacleSet();
         
         //to make sure it only starts when 
-        facingForward = (getTheta() < 0.1 && getTheta() > -0.1);
+        facingForward = (Enes100.getTheta() < 0.1 && Enes100.getTheta() > -0.1);
     
 }
 
@@ -383,6 +392,12 @@ int getPositionNum()
     }
         
     return highPosition;
+}
+
+bool readBumpSensor(int x){
+
+  return false;
+    
 }
 
 //Moves forward with specified specified specified speed
@@ -401,7 +416,7 @@ void moveBackward(int speed)
 //Spints otv to 0 degrees
 void spinToZero()
 {
-    while(!(getTheta() < 0.2 && getTheta() > -0.2))
+    while(!(Enes100.getTheta() < 0.2 && Enes100.getTheta() > -0.2))
     {
         if(startedAtBottom)
         {
@@ -415,9 +430,9 @@ void spinToZero()
         }
     }
     
-    if(getTheta() < 0)
+    if(Enes100.getTheta() < 0)
     {
-        while(!(getTheta() > -0.01)) 
+        while(!(Enes100.getTheta() > -0.01)) 
         {
             setLeftMotorPWM(-2); 
             setRightMotorPWM(2);
@@ -425,7 +440,7 @@ void spinToZero()
     }
     else
     {
-        while(!(getTheta() < 0.01)) 
+        while(!(Enes100.getTheta() < 0.01)) 
         {
             setLeftMotorPWM(2); 
             setRightMotorPWM(-2);
@@ -437,9 +452,9 @@ void spinToZero()
 
 void spinTohalfPi()
 {
-        while(!(getTheta() > 1.3 && getTheta() < 1.85))
+        while(!(Enes100.getTheta() > 1.3 && Enes100.getTheta() < 1.85))
         {
-            println(getTheta());
+            // println(Enes100.getTheta());
           
             setLeftMotorPWM(40); 
             setRightMotorPWM(-40);
@@ -449,9 +464,9 @@ void spinTohalfPi()
         setLeftMotorPWM(0);
         setRightMotorPWM(0);
             
-        if(getTheta() < 1.57 && getTheta() > 1.569)
+        if(Enes100.getTheta() < 1.57 && Enes100.getTheta() > 1.569)
         {
-            while(!(getTheta() > 1.56)) 
+            while(!(Enes100.getTheta() > 1.56)) 
             {
                 setLeftMotorPWM(-2); 
                 setRightMotorPWM(2);
@@ -459,7 +474,7 @@ void spinTohalfPi()
         }
         else
         {
-            while(!(getTheta() < 1.58)) 
+            while(!(Enes100.getTheta() < 1.58)) 
             {
                 setLeftMotorPWM(2); 
                 setRightMotorPWM(-2);
@@ -490,9 +505,9 @@ bool passedFirstObstacleSet()
 
 void spinToNegativeHalfPi()
 {
-    while(!(getTheta() < -1.3 && getTheta() > -1.85))
+    while(!(Enes100.getTheta() < -1.3 && Enes100.getTheta() > -1.85))
     {
-        println(getTheta());
+        // println(Enes100.getTheta());
           
         setLeftMotorPWM(40); 
         setRightMotorPWM(-40);
@@ -502,9 +517,9 @@ void spinToNegativeHalfPi()
     setLeftMotorPWM(0);
     setRightMotorPWM(0);
             
-    if(getTheta() > -1.571 && getTheta() < -1.569)
+    if(Enes100.getTheta() > -1.571 && Enes100.getTheta() < -1.569)
     {
-        while(!(getTheta() < -1.56)) 
+        while(!(Enes100.getTheta() < -1.56)) 
         {
                 setLeftMotorPWM(2); 
                 setRightMotorPWM(-2);
@@ -513,7 +528,7 @@ void spinToNegativeHalfPi()
     }
     else
     {
-        while(!(getTheta() > -1.58)) 
+        while(!(Enes100.getTheta() > -1.58)) 
         {
             setLeftMotorPWM(-2); 
             setRightMotorPWM(2);
